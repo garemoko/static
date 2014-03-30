@@ -1,0 +1,23 @@
+{
+	"parsers" :[
+		"static-example/static-example-parser.js"
+	],	
+	"pages" : {
+		"home" : {
+			"layout" : "static-example/page-layout-example.html",
+			"blocks" : [{
+					"parser" : "static_exampleParser",
+					"content" : "static-example/static-example-content.txt"
+				},
+				{
+					"parser" : "static_exampleParser",
+					"content" : "static-example/static-example-content.txt"
+				},
+				{
+					"parser" : "static_exampleParser",
+					"content" : "static-example/static-example-content.txt"
+				}
+			]
+		}
+	}
+}
