@@ -35,31 +35,38 @@ background-color: #ff7006;
 border-color: #a64802;
 }
 
-.navbar-default .navbar-brand {
+.navbar-default .navbar-brand, .navbar-default .navbar-nav li a{
 	color: #fff;
-
 }
 
-.navbar-default .navbar-brand:hover {
+.navbar-default .navbar-brand:hover, .navbar-default .navbar-nav li a:hover, .navbar-default .navbar-toggle:hover, .navbar-default .navbar-toggle:focus {
 	color: #fff;
 	background-color: #ffa806;
 }
 
+.navbar-default .navbar-toggle .icon-bar {
+	background-color:#fff;
+}
 
-.background1 h2 {
+
+.background1 h2, .background1 .btn-primary {
 	background-color: #ffb076;
 }
 
-.background2 h2 {
+.background2 h2, .background2 .btn-primary {
 	background-color: #ffcf76;
 }
 
-.background3 h2 {
+.background3 h2, .background3 .btn-primary {
 	background-color: #6f94d7;
 } 
 
-.background4 h2 {
+.background4 h2, .background4 .btn-primary {
 	background-color: #61d2c6;
+}
+
+.btn-primary {
+	border: 0;
 }
 
 .jumbotron {
@@ -80,8 +87,24 @@ border-color: #a64802;
 	padding-right: 25px;
 }
 
+.navbar-default .navbar-toggle {
+	border: 0;
+}
+
+.navbar-nav li a {
+	padding-top: 17px;
+	padding-bottom: 13px; 
+}
+
+
+.navbar .glyphicon {
+	top: 0px;
+	left: -3px;
+}
 
 /* lAYOUT */
+body { padding-top: 70px; }
+
 .static-box {
 	padding:0 20px;
 }
@@ -89,4 +112,12 @@ border-color: #a64802;
 h1, .h1, h2, .h2, h3, .h3 {
 	margin-top: 0px;
 	padding-left: 5px;
+}
+
+.jumbotron{
+	text-align: center;
+}
+
+.jumbotron p {
+	margin: 15px;
 }

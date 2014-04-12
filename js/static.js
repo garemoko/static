@@ -1,20 +1,25 @@
+//Globals
 var static_load_timestamp = new Date().getTime(),
 static_parsersLoaded = false,
 static_stuctureLoaded = false,
 static_contentLoaded = false,
-static_content = [];
+static_navLoaded = false,
+static_content = [],
+static_nav = '',
+static_siteDefinitionAddress,
+static_currentPage;
+//End Globals
 
 $(function(){
 	//Get the address of the site definition  from the querystring or use a default
-	var siteDefinitionAddress = $.getUrlVar('sd');
-	siteDefinitionAddress = (typeof siteDefinitionAddress === 'undefined') ? 'http://garemoko.github.io/static/static-example/static-example-sitedef.js' : siteDefinitionAddress;
-
-	//Get the current page from the querystring or default to home
-	var currentPage = $.getUrlVar('p');
-	currentPage = (typeof currentPage === 'undefined') ? 'home' : currentPage;
+	static_siteDefinitionAddress = $.getUrlVar('sd');
+	static_siteDefinitionAddress = (typeof static_siteDefinitionAddress === 'undefined') ? 'http://garemoko.github.io/static/static-example/static-example-sitedef.js' : static_siteDefinitionAddress;
 	
+	//Get the current page from the querystring or default to home
+	static_currentPage = $.getUrlVar('p');
+	static_currentPage = (typeof static_currentPage === 'undefined') ? 'home' : static_currentPage;
 	//load the site definition object and start the process of loading the page
-	static_getSiteDefinition(siteDefinitionAddress, currentPage);
+	static_getSiteDefinition(static_siteDefinitionAddress, static_currentPage);
 	
 });
 
@@ -29,10 +34,11 @@ function static_getSiteDefinition (siteDefinitionAddress, currentPage){
 		
 		$('head').append('<link rel="stylesheet" href="' + siteDefinition.theme.css + '" type="text/css" />');
 		
-		//get the structure, content and parsers asynchronously
+		//get the structure, content, nav and parsers asynchronously
 		static_loadStructure (siteDefinition,currentPage);
 		static_loadContent (siteDefinition,currentPage);
 		static_loadParsers (siteDefinition,currentPage, 0);
+		static_loadNav (siteDefinition);
 	});
 
 	return true;
@@ -94,6 +100,9 @@ function static_loadContent (siteDefinition,currentPage){
 	$.each(siteDefinition.pages[currentPage].blocks,function(index,block){
 		$.get(block.content, function (data){
 			static_content[index] = data;
+		}).fail(function() {
+		    static_content[index] = '';
+		}).always(function() {
 			block_counter--;
 			if (block_counter == 0){
 				console.log('%c Static:', 'color:#a64802',' Loading content took ' + ((new Date().getTime() - static_load_timestamp)/1000) + ' seconds.');
@@ -102,14 +111,26 @@ function static_loadContent (siteDefinition,currentPage){
 					render_content(siteDefinition,currentPage);
 				}
 			}
-		});
+		});;
+	});
+	return true;
+}
+
+function static_loadNav (siteDefinition){
+	$.get(siteDefinition.theme.nav, function (data){
+		static_nav = data;
+		static_navLoaded = true;
+		console.log('%c Static:', 'color:#a64802',' Loading nav took ' + ((new Date().getTime() - static_load_timestamp)/1000) + ' seconds.');
+		if (static_allLoaded()){
+			render_content(siteDefinition,currentPage);
+		}
 	});
 	return true;
 }
 
 function static_allLoaded()
 {
-	if (static_parsersLoaded && static_stuctureLoaded && static_contentLoaded){
+	if (static_parsersLoaded && static_stuctureLoaded && static_contentLoaded && static_navLoaded){
 		return true;
 	} else {
 		return false;
@@ -117,15 +138,29 @@ function static_allLoaded()
 }
 
 function render_content(siteDefinition,currentPage){
+	//add nav
+	$('body').prepend(static_nav);
+	
+	var currentURL = window.location.href;
+	$('#main-nav a').each(function(index){
+		$(this).attr('href', $(this).attr('href') + '&sd=' + static_siteDefinitionAddress);
+		if (currentURL.indexOf($(this).attr('href')) != -1){
+			$(this).parent().addClass('active');
+		}
+	})
+	
 	//for each static box
 	$('.static-box').each(function(index){
 		boxid = $(this).attr('data-static-blockid');
-		//call the correct parser to add the content
-		window[siteDefinition.pages[currentPage].blocks[boxid].parser](static_content[index], $(this));
-
+		//call the correct parser to add the content (if defined in the sitedef)
+		if (typeof siteDefinition.pages[currentPage].blocks[boxid] !== 'undefined' && typeof siteDefinition.pages[currentPage].blocks[boxid].parser !== 'undefined'){
+			window[siteDefinition.pages[currentPage].blocks[boxid].parser](static_content[index], $(this));
+		} else {
+			$(this).addClass('hidden');
+		}
 	});
 	$.getScript(siteDefinition.theme.js, function(){
-		$('.static-main').removeClass('hidden');
+		$('body').removeClass('hidden');
 		console.log('%c Static:', 'color:#a64802', ' Loading took ' + ((new Date().getTime() - static_load_timestamp)/1000) + ' seconds.');
 	});
 	return true;
