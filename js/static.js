@@ -13,6 +13,7 @@ static_currentPage;
 $(function(){
 	//Get the address of the site definition  from the querystring or use a default
 	static_siteDefinitionAddress = $.getUrlVar('sd');
+	//TODO: move example site to Google Drive
 	static_siteDefinitionAddress = (typeof static_siteDefinitionAddress === 'undefined') ? 'http://garemoko.github.io/static/static-example/static-example-sitedef.js' : static_siteDefinitionAddress;
 	
 	//Get the current page from the querystring or default to home
@@ -33,6 +34,9 @@ function static_getSiteDefinition (siteDefinitionAddress, currentPage){
 		console.log('%c Static:', 'color:#a64802',' Getting site definition took ' + ((new Date().getTime() - static_load_timestamp)/1000) + ' seconds.');
 		
 		$('head').append('<link rel="stylesheet" href="' + siteDefinition.theme.css + '" type="text/css" />');
+		
+		//TODO: add page titles to site def
+		$('head').append('<title>' + siteDefinition.title + ' - ' + currentPage + '</title>');
 		
 		//get the structure, content, nav and parsers asynchronously
 		static_loadStructure (siteDefinition,currentPage);
@@ -143,7 +147,7 @@ function render_content(siteDefinition,currentPage){
 	
 	var currentURL = window.location.href;
 	$('#main-nav a').each(function(index){
-		$(this).attr('href', $(this).attr('href') + '&sd=' + static_siteDefinitionAddress);
+		
 		if (currentURL.indexOf($(this).attr('href')) != -1){
 			$(this).parent().addClass('active');
 		}
@@ -159,6 +163,20 @@ function render_content(siteDefinition,currentPage){
 			$(this).addClass('hidden');
 		}
 	});
+	
+	//add sd querystring to urls
+	$('a').each(function (index){
+		var currentHref = $(this).attr('href');
+		
+		//if the url is relative (doesn't contain a '//' before a '?'.
+		console.log (currentHref.indexOf('//') + ' : ' + currentHref.indexOf('?'));
+		if (!(currentHref.indexOf('//') > -1) && (currentHref.indexOf('//') < currentHref.indexOf('?'))) {
+			//add the site defintion
+			$(this).attr('href', currentHref + '&sd=' + static_siteDefinitionAddress);
+		}
+		
+	});
+	
 	$.getScript(siteDefinition.theme.js, function(){
 		$('body').removeClass('hidden');
 		console.log('%c Static:', 'color:#a64802', ' Loading took ' + ((new Date().getTime() - static_load_timestamp)/1000) + ' seconds.');

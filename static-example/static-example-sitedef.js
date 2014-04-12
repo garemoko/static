@@ -1,5 +1,6 @@
 var static_returnedSiteDefinition = 
 {
+	"title" : 'Static',
 	"theme" : {
 		"css" : "static-example/static-theme.css",
 		"js" : "static-example/static-theme.js",
@@ -55,10 +56,34 @@ var static_returnedSiteDefinition =
 				["http://garemoko.github.io/static/parsers/markdown/Markdown.Converter.js"],
 				["http://garemoko.github.io/static/parsers/markdown/markdown.js"]
 			],	
-			"layout" : "layouts/title-4-blocks.html",
+			"layout" : "layouts/title-6-blocks.html",
 			"blocks" : [{
 					"parser" : "static_markdownParser",
 					"content" : "https://googledrive.com/host/0B9fyoDEGTP0NV29BZWhQMDVHX00/how-it-works/title.txt"
+				},
+				{
+					"parser" : "static_markdownParser",
+					"content" : "https://googledrive.com/host/0B9fyoDEGTP0NV29BZWhQMDVHX00/how-it-works/2.txt"
+				},
+				{
+					"parser" : "static_markdownParser",
+					"content" : "https://googledrive.com/host/0B9fyoDEGTP0NV29BZWhQMDVHX00/how-it-works/3.txt"
+				},
+				{
+					"parser" : "static_markdownParser",
+					"content" : "https://googledrive.com/host/0B9fyoDEGTP0NV29BZWhQMDVHX00/how-it-works/4.txt"
+				},
+				{
+					"parser" : "static_markdownParser",
+					"content" : "https://googledrive.com/host/0B9fyoDEGTP0NV29BZWhQMDVHX00/how-it-works/5.txt"
+				},
+				{
+					"parser" : "static_markdownParser",
+					"content" : "https://googledrive.com/host/0B9fyoDEGTP0NV29BZWhQMDVHX00/how-it-works/6.txt"
+				},
+				{
+					"parser" : "static_markdownParser",
+					"content" : "https://googledrive.com/host/0B9fyoDEGTP0NV29BZWhQMDVHX00/how-it-works/7.txt"
 				}
 			]
 		},
