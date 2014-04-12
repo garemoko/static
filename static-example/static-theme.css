@@ -1,3 +1,92 @@
-.static-box{
-	border: 1px solid;
+
+/* FONTS AND SIZES */
+
+h1, h2,h3,h4,h5,h6{
+	
+	font-family: 'Ceviche One', cursive;
+}
+h1{
+	font-size:5em;
+}
+
+h2{
+	font-size:3em;
+}
+
+body {
+	font-family: 'Roboto', sans-serif;
+}
+
+
+@media screen and (min-width: 768px){
+	.jumbotron h1, .jumbotron .h1 {
+		font-size: 120px;
+	}
+}
+
+.navbar-default .navbar-brand {
+	
+}
+
+/* COLORS http://colorschemedesigner.com/#0r51Tvfyiw0w0 */
+
+.navbar-default {
+background-color: #ff7006;
+border-color: #a64802;
+}
+
+.navbar-default .navbar-brand {
+	color: #fff;
+
+}
+
+.navbar-default .navbar-brand:hover {
+	color: #fff;
+	background-color: #ffa806;
+}
+
+
+.background1 h2 {
+	background-color: #ffb076;
+}
+
+.background2 h2 {
+	background-color: #ffcf76;
+}
+
+.background3 h2 {
+	background-color: #6f94d7;
+} 
+
+.background4 h2 {
+	background-color: #61d2c6;
+}
+
+.jumbotron {
+	/*border: 5px solid;
+	 border-color: #f90618;*/
+	background-color: #ff959f;
+}
+
+
+/* NAV */
+.navbar {
+	border-radius: 0;
+	border:0;
+	
+}
+.navbar .container {
+	padding-left: 40px;
+	padding-right: 25px;
+}
+
+
+/* lAYOUT */
+.static-box {
+	padding:0 20px;
+}
+
+h1, .h1, h2, .h2, h3, .h3 {
+	margin-top: 0px;
+	padding-left: 5px;
 }

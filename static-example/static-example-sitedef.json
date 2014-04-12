@@ -1,21 +1,31 @@
 {
 	"parsers" :[
-		"static-example/static-example-parser.js"
+		["parsers/markdown/Markdown.Converter.js"],
+		["parsers/markdown/markdown.js"]
 	],	
 	"pages" : {
 		"home" : {
 			"layout" : "static-example/page-layout-example.html",
 			"blocks" : [{
-					"parser" : "static_exampleParser",
-					"content" : "static-example/static-example-content.txt"
+					"parser" : "static_markdownParser",
+					"content" : "https://googledrive.com/host/0B9fyoDEGTP0NV29BZWhQMDVHX00/1.txt"
 				},
 				{
-					"parser" : "static_exampleParser",
-					"content" : "static-example/static-example-content.txt"
+					"parser" : "static_markdownParser",
+					"content" : "https://googledrive.com/host/0B9fyoDEGTP0NV29BZWhQMDVHX00/2.txt"
 				},
 				{
-					"parser" : "static_exampleParser",
-					"content" : "static-example/static-example-content.txt"
+					"parser" : "static_markdownParser",
+					"content" : "https://googledrive.com/host/0B9fyoDEGTP0NV29BZWhQMDVHX00/3.txt"
+				},
+				{
+					"parser" : "static_markdownParser",
+					"content" : "https://googledrive.com/host/0B9fyoDEGTP0NV29BZWhQMDVHX00/4.txt"
+				}
+				,
+				{
+					"parser" : "static_markdownParser",
+					"content" : "https://googledrive.com/host/0B9fyoDEGTP0NV29BZWhQMDVHX00/5.txt"
 				}
 			]
 		}
