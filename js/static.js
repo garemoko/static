@@ -13,8 +13,7 @@ static_currentPage;
 $(function(){
 	//Get the address of the site definition  from the querystring or use a default
 	static_siteDefinitionAddress = $.getUrlVar('sd');
-	//TODO: move example site to Google Drive
-	static_siteDefinitionAddress = (typeof static_siteDefinitionAddress === 'undefined') ? 'http://garemoko.github.io/static/static-example/static-example-sitedef.js' : static_siteDefinitionAddress;
+	static_siteDefinitionAddress = (typeof static_siteDefinitionAddress === 'undefined') ? 'https://googledrive.com/host/0B9fyoDEGTP0NV29BZWhQMDVHX00' : static_siteDefinitionAddress;
 	
 	//Get the current page from the querystring or default to home
 	static_currentPage = $.getUrlVar('p');
@@ -28,8 +27,11 @@ $(function(){
 function static_getSiteDefinition (siteDefinitionAddress, currentPage){
 	
 	//get the site definition
-	$.getScript(siteDefinitionAddress, function() {
-		var siteDefinition = static_returnedSiteDefinition;
+	$.getScript(siteDefinitionAddress + '/site-def.js', function() {
+		
+		//replace [root] with the site defintiion directory throughout. It's simpliest to convert the object to a string and back in order to achieve this. 
+		var siteDefinition = JSON.parse(JSON.stringify(static_returnedSiteDefinition).replace(/\[root\]/g, siteDefinitionAddress));
+		
 		//load the page structure
 		console.log('%c Static:', 'color:#a64802',' Getting site definition took ' + ((new Date().getTime() - static_load_timestamp)/1000) + ' seconds.');
 		
@@ -42,7 +44,7 @@ function static_getSiteDefinition (siteDefinitionAddress, currentPage){
 		static_loadStructure (siteDefinition,currentPage);
 		static_loadContent (siteDefinition,currentPage);
 		static_loadParsers (siteDefinition,currentPage, 0);
-		static_loadNav (siteDefinition);
+		static_loadNav (siteDefinition,currentPage);
 	});
 
 	return true;
@@ -120,7 +122,7 @@ function static_loadContent (siteDefinition,currentPage){
 	return true;
 }
 
-function static_loadNav (siteDefinition){
+function static_loadNav (siteDefinition,currentPage){
 	$.get(siteDefinition.theme.nav, function (data){
 		static_nav = data;
 		static_navLoaded = true;
@@ -169,7 +171,6 @@ function render_content(siteDefinition,currentPage){
 		var currentHref = $(this).attr('href');
 		
 		//if the url is relative (doesn't contain a '//' before a '?'.
-		console.log (currentHref.indexOf('//') + ' : ' + currentHref.indexOf('?'));
 		if (!(currentHref.indexOf('//') > -1) && (currentHref.indexOf('//') < currentHref.indexOf('?'))) {
 			//add the site defintion
 			$(this).attr('href', currentHref + '&sd=' + static_siteDefinitionAddress);
