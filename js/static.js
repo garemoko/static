@@ -3,6 +3,7 @@ var static_load_timestamp = new Date().getTime(),
 static_parsersLoaded = false,
 static_stuctureLoaded = false,
 static_contentLoaded = false,
+static_firstRender = true,
 static_content = [],
 static_siteDefinitionAddress,
 static_siteDefinition,
@@ -172,9 +173,13 @@ function static_renderNav (){
 	static_appendNav('left', static_siteDefinition, '#navbar-collapse-1');
 	static_appendNav('right', static_siteDefinition, '#navbar-collapse-1');
 	
-	var currentURL = window.location.href;
+	static_setActiveNav();
+}
+
+function static_setActiveNav(){
+	$('#main-nav .active').removeClass('active');
 	$('#main-nav a').each(function(index){
-		if (currentURL.indexOf($(this).attr('data-static-page')) != -1){
+		if ($(this).attr('data-static-page') == static_currentPage){
 			$(this).parent().addClass('active');
 		}
 	});
@@ -223,7 +228,6 @@ function static_renderContent(){
 
 	//for each static box
 	$('.static-block').each(function(index){
-		console.log ('block found: ' + index);
 		boxid = $(this).attr('data-static-blockid');
 		//call the correct parser to add the content (if defined in the sitedef)
 		if (typeof static_siteDefinition.pages[static_currentPage].blocks[boxid] !== 'undefined' && typeof static_siteDefinition.pages[static_currentPage].blocks[boxid].parser !== 'undefined'){
@@ -233,25 +237,36 @@ function static_renderContent(){
 		}
 	});
 	
-
+	console.log('%c Static:', 'color:#a64802', ' Parsing content took ' + ((new Date().getTime() - static_load_timestamp)/1000) + ' seconds.');
 	
-	$.getScript(static_siteDefinition.theme.js, function(){
-		$('body').removeClass('hidden');
-		console.log('%c Static:', 'color:#a64802', ' Loading took ' + ((new Date().getTime() - static_load_timestamp)/1000) + ' seconds.');
-	});
+	if (static_firstRender){
+		$.getScript(static_siteDefinition.theme.js, function(){
+			$('body').removeClass('hidden');
+			console.log('%c Static:', 'color:#a64802', ' Loading theme js took ' + ((new Date().getTime() - static_load_timestamp)/1000) + ' seconds.');
+		});
+		static_firstRender = false;
+	}
 	return true;
 }
 
 function static_changePage(page){
-	static_load_timestamp = new Date().getTime();
 	console.log('%c Static page change:', 'color:#48a602', page);
 	
 	static_currentPage = page; 
+	static_setActiveNav();
 	
-	
+	//reset globals and page
+	static_load_timestamp = new Date().getTime();
+	static_parsersLoaded = false;
+	static_stuctureLoaded = false;
+	static_contentLoaded = false;
+	//TODO: cache content for pages that have already been viewed. 
+	static_content = [];
 	$('.static-main:first').html('');
+	
 	//get the structure, content, nav and parsers asynchronously
 	static_renderStructure();
+	//TODO: cache content for pages that have already been viewed. 
 	static_loadContent ();
 	//TODO: only load parsers if not already loaded
 	static_loadParsers (0);
