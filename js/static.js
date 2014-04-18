@@ -248,6 +248,8 @@ function static_changePage(page){
 	
 	static_currentPage = page; 
 	
+	
+	$('.static-main:first').html('');
 	//get the structure, content, nav and parsers asynchronously
 	static_renderStructure();
 	static_loadContent ();
