@@ -3,10 +3,9 @@ var static_load_timestamp = new Date().getTime(),
 static_parsersLoaded = false,
 static_stuctureLoaded = false,
 static_contentLoaded = false,
-static_navLoaded = false,
 static_content = [],
-static_nav = '',
 static_siteDefinitionAddress,
+static_siteDefinition,
 static_currentPage;
 //End Globals
 
@@ -19,57 +18,61 @@ $(function(){
 	static_currentPage = $.getUrlVar('p');
 	static_currentPage = (typeof static_currentPage === 'undefined') ? 'home' : static_currentPage;
 	//load the site definition object and start the process of loading the page
-	static_getSiteDefinition(static_siteDefinitionAddress, static_currentPage);
+	static_getstatic_siteDefinition(static_siteDefinitionAddress, static_currentPage);
 	
 });
 
 //TODO: class
-function static_getSiteDefinition (siteDefinitionAddress, currentPage){
+function static_getstatic_siteDefinition (static_siteDefinitionAddress, static_currentPage){
 	
 	//get the site definition
-	$.getScript(siteDefinitionAddress + '/site-def.js', function() {
+	$.getScript(static_siteDefinitionAddress + '/site-def.js', function() {
 		
 		//replace [root] with the site defintiion directory throughout. It's simpliest to convert the object to a string and back in order to achieve this. 
-		var siteDefinition = JSON.parse(JSON.stringify(static_returnedSiteDefinition).replace(/\[root\]/g, siteDefinitionAddress));
-		
+		static_siteDefinition = JSON.parse(JSON.stringify(static_returnedSiteDefinition).replace(/\[root\]/g, static_siteDefinitionAddress));
+
 		//load the page structure
 		console.log('%c Static:', 'color:#a64802',' Getting site definition took ' + ((new Date().getTime() - static_load_timestamp)/1000) + ' seconds.');
 		
-		$('head').append('<link rel="stylesheet" href="' + siteDefinition.theme.css + '" type="text/css" />');
+		//TODO: put fonts in theme
+		$('head').append('<link rel="stylesheet" href="' + static_siteDefinition.theme.css + '" type="text/css" />');
 		
 		//TODO: add page titles to site def
-		$('head').append('<title>' + siteDefinition.title + ' - ' + currentPage + '</title>');
+		$('head').append('<title>' + static_siteDefinition.title + ' - ' + static_currentPage + '</title>');
 		
 		//get the structure, content, nav and parsers asynchronously
-		static_loadStructure (siteDefinition,currentPage);
-		static_loadContent (siteDefinition,currentPage);
-		static_loadParsers (siteDefinition,currentPage, 0);
-		static_loadNav (siteDefinition,currentPage);
+		//TODO: use global static_siteDefinition and static_currentPage instead of chanining parameters
+		static_loadStructure ();
+		static_loadContent ();
+		static_loadParsers (0);
+		if (static_siteDefinition.hasOwnProperty('navigation')){
+			static_renderNav (static_siteDefinition,static_currentPage);
+		}
 	});
 
 	return true;
 }
 
-function static_loadStructure (siteDefinition,currentPage){
+function static_loadStructure (){
 	
 	//get the address of the page layout from the site definition and load it in. 
-	$.get(siteDefinition.pages[currentPage].layout, function (data){
+	$.get(static_siteDefinition.pages[static_currentPage].layout, function (data){
 		//add the structure to the page
 		$('.static-main:first').html(data);
 		console.log('%c Static:', 'color:#a64802',' Loading page structure took ' + ((new Date().getTime() - static_load_timestamp)/1000) + ' seconds.');
 		static_stuctureLoaded = true;
 		//load the page content
 		if (static_allLoaded()){
-			render_content(siteDefinition,currentPage);
+			static_renderContent();
 		}
 	});
 	return true;
 };
 
-function static_loadParsers (siteDefinition,currentPage,groupIndex){
-	var function_counter = siteDefinition.pages[currentPage].parsers[groupIndex].length;
+function static_loadParsers (groupIndex){
+	var function_counter = static_siteDefinition.pages[static_currentPage].parsers[groupIndex].length;
 	//load each parser script
-	$.each(siteDefinition.pages[currentPage].parsers[groupIndex], function(index,value){
+	$.each(static_siteDefinition.pages[static_currentPage].parsers[groupIndex], function(index,value){
 		$.getScript(value, function(){
 			function_counter--;
 			//if this is the last parser to be got in this priority group...
@@ -77,16 +80,16 @@ function static_loadParsers (siteDefinition,currentPage,groupIndex){
 			{
 				console.log('%c Static:', 'color:#a64802',' Loading parser group ' + groupIndex + ' took ' + ((new Date().getTime() - static_load_timestamp)/1000) + ' seconds.');
 				groupIndex++;
-				if (groupIndex == siteDefinition.pages[currentPage].parsers.length){
+				if (groupIndex == static_siteDefinition.pages[static_currentPage].parsers.length){
 					//proceed to load site content
 					console.log('%c Static:', 'color:#a64802',' Loading all parsers took ' + ((new Date().getTime() - static_load_timestamp)/1000) + ' seconds.');
 					static_parsersLoaded = true;
 					if (static_allLoaded()){
-						render_content(siteDefinition,currentPage);
+						static_renderContent();
 					}
 				}
 				else { //load the next priority group
-					static_loadParsers(siteDefinition,currentPage,groupIndex);
+					static_loadParsers(groupIndex);
 				}
 			}
 		}).fail(function(){
@@ -100,10 +103,10 @@ function static_loadParsers (siteDefinition,currentPage,groupIndex){
 	});
 }
 
-function static_loadContent (siteDefinition,currentPage){
+function static_loadContent (){
 	//for each static box
-	var block_counter = siteDefinition.pages[currentPage].blocks.length;
-	$.each(siteDefinition.pages[currentPage].blocks,function(index,block){
+	var block_counter = static_siteDefinition.pages[static_currentPage].blocks.length;
+	$.each(static_siteDefinition.pages[static_currentPage].blocks,function(index,block){
 		$.get(block.content, function (data){
 			static_content[index] = data;
 		}).fail(function() {
@@ -114,7 +117,7 @@ function static_loadContent (siteDefinition,currentPage){
 				console.log('%c Static:', 'color:#a64802',' Loading content took ' + ((new Date().getTime() - static_load_timestamp)/1000) + ' seconds.');
 				static_contentLoaded = true;
 				if (static_allLoaded()){
-					render_content(siteDefinition,currentPage);
+					static_renderContent();
 				}
 			}
 		});;
@@ -122,69 +125,108 @@ function static_loadContent (siteDefinition,currentPage){
 	return true;
 }
 
-function static_loadNav (siteDefinition,currentPage){
-	$.get(siteDefinition.theme.nav, function (data){
-		static_nav = data;
-		static_navLoaded = true;
-		console.log('%c Static:', 'color:#a64802',' Loading nav took ' + ((new Date().getTime() - static_load_timestamp)/1000) + ' seconds.');
-		if (static_allLoaded()){
-			render_content(siteDefinition,currentPage);
-		}
-	});
-	return true;
-}
+
+
 
 function static_allLoaded()
 {
-	if (static_parsersLoaded && static_stuctureLoaded && static_contentLoaded && static_navLoaded){
+	if (static_parsersLoaded && static_stuctureLoaded && static_contentLoaded){
 		return true;
 	} else {
 		return false;
 	}
 }
 
-function render_content(siteDefinition,currentPage){
-	//add nav
-	$('body').prepend(static_nav);
+function static_renderNav (){
+	
+	if (static_siteDefinition.navigation.hasOwnProperty('brand')){
+		$('.navbar-header').append(static_buildNavLink(static_siteDefinition.navigation.brand).addClass('navbar-brand'));
+	}
+	
+	static_appendNav('left', static_siteDefinition, '#navbar-collapse-1');
+	static_appendNav('right', static_siteDefinition, '#navbar-collapse-1');
 	
 	var currentURL = window.location.href;
 	$('#main-nav a').each(function(index){
-		
-		if (currentURL.indexOf($(this).attr('href')) != -1){
+		if (currentURL.indexOf($(this).attr('data-static-page')) != -1){
 			$(this).parent().addClass('active');
 		}
-	})
+	});
+}
+
+function static_appendNav (type, static_siteDefinition, target){
+	if (static_siteDefinition.navigation.hasOwnProperty(type)){
+		$(target).append(static_buildNav (type, static_siteDefinition.navigation[type]));
+	}	
+}
+
+function static_buildNav (type, navObj){
+	var navHtml = $('<ul class="nav navbar-nav navbar-' + type + '"></ul>');
+	$.each(navObj, function(index,linkObj){
+		var liHtml = $('<li></li>').append(static_buildNavLink(linkObj));
+		navHtml.append(liHtml);
+	});
+	return navHtml;
+}
+
+function static_buildNavLink (linkObj){
+	var linkHtml = $('<a></a>');
+	if (linkObj.hasOwnProperty('page')){
+		linkHtml.click(function(){
+			static_changePage(linkObj.page);
+		});
+		linkHtml.attr('data-static-page', linkObj.page)
+	}
+	else
+	{
+		linkHtml.attr('data-static-page', '')
+	}
 	
+	if (linkObj.hasOwnProperty('glyph')){
+		linkHtml.append('<span class="glyphicon glyphicon-' + linkObj.glyph + '"></span> ');
+	};
+	
+	if (linkObj.hasOwnProperty('title')){
+		linkHtml.append(linkObj.title);
+	};
+	
+	return linkHtml;
+}
+
+function static_renderContent(){
+
 	//for each static box
 	$('.static-box').each(function(index){
 		boxid = $(this).attr('data-static-blockid');
 		//call the correct parser to add the content (if defined in the sitedef)
-		if (typeof siteDefinition.pages[currentPage].blocks[boxid] !== 'undefined' && typeof siteDefinition.pages[currentPage].blocks[boxid].parser !== 'undefined'){
-			window[siteDefinition.pages[currentPage].blocks[boxid].parser](static_content[index], $(this));
+		if (typeof static_siteDefinition.pages[static_currentPage].blocks[boxid] !== 'undefined' && typeof static_siteDefinition.pages[static_currentPage].blocks[boxid].parser !== 'undefined'){
+			window[static_siteDefinition.pages[static_currentPage].blocks[boxid].parser](static_content[index], $(this));
 		} else {
 			$(this).addClass('hidden');
 		}
 	});
 	
-	//add sd querystring to urls
-	$('a').each(function (index){
-		var currentHref = $(this).attr('href');
-		
-		//if the url is relative (doesn't contain a '//' before a '?'.
-		if (!(currentHref.indexOf('//') > -1) && (currentHref.indexOf('//') < currentHref.indexOf('?'))) {
-			//add the site defintion
-			$(this).attr('href', currentHref + '&sd=' + static_siteDefinitionAddress);
-		}
-		
-	});
+
 	
-	$.getScript(siteDefinition.theme.js, function(){
+	$.getScript(static_siteDefinition.theme.js, function(){
 		$('body').removeClass('hidden');
 		console.log('%c Static:', 'color:#a64802', ' Loading took ' + ((new Date().getTime() - static_load_timestamp)/1000) + ' seconds.');
 	});
 	return true;
 }
 
+function static_changePage(page){
+	static_load_timestamp = new Date().getTime();
+	console.log('%c Static page change:', 'color:#48a602', page);
+	
+	static_currentPage = page; 
+	
+	//get the structure, content, nav and parsers asynchronously
+	static_loadStructure ();
+	static_loadContent ();
+	//TODO: only load parsers if not already loaded
+	static_loadParsers (0);
+}
 
 
 $.extend({
