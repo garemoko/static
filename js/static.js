@@ -34,15 +34,14 @@ function static_getstatic_siteDefinition (static_siteDefinitionAddress, static_c
 		//load the page structure
 		console.log('%c Static:', 'color:#a64802',' Getting site definition took ' + ((new Date().getTime() - static_load_timestamp)/1000) + ' seconds.');
 		
-		//TODO: put fonts in theme
 		$('head').append('<link rel="stylesheet" href="' + static_siteDefinition.theme.css + '" type="text/css" />');
 		
 		//TODO: add page titles to site def
 		$('head').append('<title>' + static_siteDefinition.title + ' - ' + static_currentPage + '</title>');
 		
 		//get the structure, content, nav and parsers asynchronously
-		//TODO: use global static_siteDefinition and static_currentPage instead of chanining parameters
-		static_loadStructure ();
+
+		static_renderStructure ();
 		static_loadContent ();
 		static_loadParsers (0);
 		if (static_siteDefinition.hasOwnProperty('navigation')){
@@ -53,21 +52,48 @@ function static_getstatic_siteDefinition (static_siteDefinitionAddress, static_c
 	return true;
 }
 
-function static_loadStructure (){
+function static_renderStructure (){
+	var widthCounter = 0; 
+	//add the first row
+	$('.static-main:first').append('<div class="row"></div>');
 	
-	//get the address of the page layout from the site definition and load it in. 
-	$.get(static_siteDefinition.pages[static_currentPage].layout, function (data){
-		//add the structure to the page
-		$('.static-main:first').html(data);
-		console.log('%c Static:', 'color:#a64802',' Loading page structure took ' + ((new Date().getTime() - static_load_timestamp)/1000) + ' seconds.');
-		static_stuctureLoaded = true;
-		//load the page content
-		if (static_allLoaded()){
-			static_renderContent();
+	//add each block to the page
+	$.each(static_siteDefinition.pages[static_currentPage].blocks, function(index,blockObj){
+		
+		//create block object
+		var blockHtml = $('<div class="static-block"></div>');
+		//set the index
+		blockHtml.attr('data-static-blockid', index);
+		//add any classes e.g. jumbotron 
+		if (blockObj.hasOwnProperty('classes')){
+			blockHtml.addClass(blockObj.classes);
 		}
+		//add bootstrap width
+		if (!blockObj.hasOwnProperty('width')){
+			blockObj.width = 4;
+		} 
+		blockHtml.addClass('col-md-' + blockObj.width);
+		
+		widthCounter += blockObj.width;
+		if (widthCounter > 12) {
+			//add a new row
+			$('.static-main:first').append('<div class="row"></div>');
+			widthCounter = blockObj.width;
+		}
+		
+		//add the block to the bottom row		
+		$('.row:last').append(blockHtml);
 	});
+	console.log()
+	static_stuctureLoaded = true;
+	console.log('%c Static:', 'color:#a64802',' Render structure took ' + ((new Date().getTime() - static_load_timestamp)/1000) + ' seconds.');
+	//load the page content
+	if (static_allLoaded()){
+		static_renderContent();
+	}
+
 	return true;
-};
+}; 
 
 function static_loadParsers (groupIndex){
 	var function_counter = static_siteDefinition.pages[static_currentPage].parsers[groupIndex].length;
@@ -196,7 +222,8 @@ function static_buildNavLink (linkObj){
 function static_renderContent(){
 
 	//for each static box
-	$('.static-box').each(function(index){
+	$('.static-block').each(function(index){
+		console.log ('block found: ' + index);
 		boxid = $(this).attr('data-static-blockid');
 		//call the correct parser to add the content (if defined in the sitedef)
 		if (typeof static_siteDefinition.pages[static_currentPage].blocks[boxid] !== 'undefined' && typeof static_siteDefinition.pages[static_currentPage].blocks[boxid].parser !== 'undefined'){
