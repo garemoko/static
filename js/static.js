@@ -249,7 +249,7 @@ function static_changePage(page){
 	static_currentPage = page; 
 	
 	//get the structure, content, nav and parsers asynchronously
-	static_loadStructure ();
+	static_renderStructure();
 	static_loadContent ();
 	//TODO: only load parsers if not already loaded
 	static_loadParsers (0);
