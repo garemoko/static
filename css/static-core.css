@@ -1,0 +1,81 @@
+/* FOOTER */
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+body {
+  /* Margin bottom by footer height */
+  margin-bottom: 50px;
+}
+#footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  /* Set the fixed height of the footer here */
+  height: 50px;
+  background-color: #f5f5f5;
+  text-align:right;
+}
+
+/* EDITOR */
+#static-editorDragTarget{
+	cursor: none;
+}
+
+.row-last{
+	min-height: 250px;
+}
+
+.static-protoBlockInterface {
+	
+	height: 250px;
+	width: 250px;
+	border: dashed 3px;
+	margin: 22px auto;
+	text-align: center;
+	background-color: #ccc;
+	position: relative;
+	
+}
+.static-protoBlockInterface .glyphicon {
+	font-size: 160px;
+	padding: 10px;
+}
+
+
+.static-protoBlockInterface p {
+	font-family: 'Special Elite', sans-serif;
+	font-size: 30px;
+}
+
+.static-protoBlockInterface-option p {
+	font-size: 14px;
+}
+
+.static-protoBlockInterface-option {
+	position: absolute;
+	top: 0px;
+	left: 34px;
+}
+
+.static-protoBlockInterface-option .glyphicon {
+	color: #5F94FF;
+	cursor: pointer;
+}
+
+.static-protoBlockInterface-option .glyphicon:hover {
+	color: #AFFF7C;
+}
+
+/* fix for space on right of glyphicon */
+.static-protoBlockInterface .glyphicon-th {
+	padding-left: 10px;
+	margin-right: -10px;
+}
+
+/* NAV */
+nav a {
+	cursor: pointer;
+}
+

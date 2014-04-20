@@ -4,8 +4,8 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- Bootstrap -->
     <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/static-core.css" rel="stylesheet">
 
     <!--[if lt IE 9]>
       <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
@@ -34,9 +34,32 @@
 	<div class='container static-main'>
 		
     </div>
+    
+     <div id="footer" class="hidden-xs hidden-sm">
+     	<nav  id='footer-nav' class="navbar navbar-default " role="navigation">
+	      <div class="container">
+		      	<ul class="nav navbar-nav navbar-left static-editorLeftNav hidden">
+		      		<li><a class="static-editorAddBlock"><span class="glyphicon glyphicon-th"></span>Add block</a></li>
+		      		<li><a class="static-editorEditNav"><span class="glyphicon glyphicon-th-list"></span>Edit Nav</a></li>
+		      		<li><a class="static-editorSiteSettings"><span class="glyphicon glyphicon-wrench"></span>Site settings</a></li>
+		      		<li><a class="static-editorSave"><span class="glyphicon glyphicon-cloud-download"></span>Save</a></li>
+		      		<li><a class="static-editorHelp"><span class="glyphicon glyphicon-question-sign"></span>Help!!!</a></li>
+		      	</ul>
+		      	<ul class="nav navbar-nav navbar-right">
+		      		<li><a class="static-editorLaunch"><span class="glyphicon glyphicon-cog"></span>Launch editor</a></li>
+		      		<li><a class="static-editorClose hidden"><span class="glyphicon glyphicon-remove"></span>Close editor</a></li>
+		      	</ul>
+	      </div>
+      </nav>
+    </div>
+    
     <script src="js/jquery.min.js"></script>
+    <!--[if lt IE 10]>
+    	<script src="js/jquery.xdomainrequest.min.js"></script>
+    <![endif]-->
     <script src="js/bootstrap.min.js"></script>
     <script src="js/static.js"></script>
+    <script src="js/static-editor.js"></script>
     <script src="parsers/markdown/Markdown.Converter.js"></script>
   </body>
 </html>

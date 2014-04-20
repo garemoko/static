@@ -85,7 +85,10 @@ function static_renderStructure (){
 		//add the block to the bottom row		
 		$('.row:last').append(blockHtml);
 	});
-	console.log()
+	
+	//add one empty row at the bottom
+	$('<div class="row row-last"></div>').insertAfter($('.row:last'));
+	
 	static_stuctureLoaded = true;
 	console.log('%c Static:', 'color:#a64802',' Render structure took ' + ((new Date().getTime() - static_load_timestamp)/1000) + ' seconds.');
 	//load the page content
@@ -136,7 +139,7 @@ function static_loadContent (){
 	$.each(static_siteDefinition.pages[static_currentPage].blocks,function(index,block){
 		$.get(block.content, function (data){
 			static_content[index] = data;
-		}).fail(function() {
+		}).fail(function(data) {
 		    static_content[index] = '';
 		}).always(function() {
 			block_counter--;
@@ -187,6 +190,7 @@ function static_setActiveNav(){
 
 function static_appendNav (type, static_siteDefinition, target){
 	if (static_siteDefinition.navigation.hasOwnProperty(type)){
+		
 		$(target).append(static_buildNav (type, static_siteDefinition.navigation[type]));
 	}	
 }
@@ -273,6 +277,7 @@ function static_changePage(page){
 }
 
 
+
 $.extend({
   getUrlVars: function(){
     var vars = [], hash;
@@ -289,4 +294,6 @@ $.extend({
     return $.getUrlVars()[name];
   }
 });
+
+
 

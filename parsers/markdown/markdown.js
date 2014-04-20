@@ -4,7 +4,6 @@ function static_markdownParser(content, target) {
 
 	//parse the contents of the file
 	var htmlToAdd = $(converter.makeHtml(content));
-	
 	//convert in site links
 	htmlToAdd.find('a').each(function(index){
 		if ($(this).is('[data-static-page]')) {
@@ -13,7 +12,6 @@ function static_markdownParser(content, target) {
 			});
 		}
 	});
-	
 	//Add to the page
 	target.html(htmlToAdd);
 	return true;
