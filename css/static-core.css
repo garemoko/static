@@ -18,16 +18,61 @@ body {
   text-align:right;
 }
 
+#static-recyclebin{
+	position: absolute;
+  	bottom:50px;
+  	right:50px;
+}
+
+/* FLIPPER */
+.flip {
+  -webkit-perspective: 800;
+    position: relative;
+}
+.flip .card.flipped {
+  -webkit-transform: rotatex(180deg);
+}
+.flip .card.flipped .front {
+	height:250px;
+}
+.flip .card {
+  width: 100%;
+  height: 100%;
+  -webkit-transform-style: preserve-3d;
+  -webkit-transition: 0.5s;
+}
+.flip .card .face {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  -webkit-backface-visibility: hidden ;
+  z-index: 2;
+}
+.flip .card .front {
+  position: relative;
+  z-index: 1;
+}
+.flip .card .back {
+  -webkit-transform: rotatex(180deg);
+  height: 250px;
+	width: 250px;
+
+	position: absolute;
+	top: 0px;
+margin: 25px auto;
+  
+}
+
 /* EDITOR */
 #static-editorDragTarget{
-	cursor: none;
+	cursor: move;
 }
 
 .row-last{
 	min-height: 250px;
 }
 
-.static-protoBlockInterface {
+.static-protoBlockInterface, .static-recyclebin-inner {
 	
 	height: 250px;
 	width: 250px;
@@ -36,15 +81,20 @@ body {
 	text-align: center;
 	background-color: #ccc;
 	position: relative;
+	cursor: auto;
 	
 }
-.static-protoBlockInterface .glyphicon {
+.static-protoBlockInterface .glyphicon, .static-recyclebin-inner .glyphicon {
 	font-size: 160px;
 	padding: 10px;
 }
 
+.static-recyclebin-inner .glyphicon{
+	padding-top:30px;
+}
 
-.static-protoBlockInterface p {
+
+.static-protoBlockInterface p, .static-recyclebin-inner p {
 	font-family: 'Special Elite', sans-serif;
 	font-size: 30px;
 }

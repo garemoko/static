@@ -8,6 +8,9 @@ static_zoom = 0.5;
 var static_dragTargetTemplate = $('<div id="static-editorDragTarget" class="col-md-4"></div>');
 static_dragTargetTemplate.append('<div class="static-protoBlockInterface"><span class="glyphicon glyphicon-question-sign"></span><p>New Block</p></div>');
 
+var static_recyclebin = $('<div id="static-recyclebin"></div>');
+static_recyclebin.append('<div class="static-recyclebin-inner"><span class="glyphicon glyphicon-trash"></span><p>Bin</p></div>');
+
 var static_protoBlockOptionContent = $('<div class="static-protoBlockInterface-option" class="hidden"><span class="glyphicon glyphicon-align-center"></span><p>Content</p></div>'),
 static_protoBlockOptionContainer = $('<div class="static-protoBlockInterface-option" class="hidden"><span class="glyphicon glyphicon-th"></span><p>Container</p></div>'),
 static_protoBlockOptionDesc = $('<div style="width:100%;height:150px;"></div><p>What type of block is this?</p>');
@@ -19,6 +22,13 @@ static_protoBlockOptionDesc = $('<div style="width:100%;height:150px;"></div><p>
 $(function(){
 	staticEditor_addClickFunctions();	
 	
+	$(static_recyclebin).children('.static-recyclebin-inner').mouseenter(function(){
+		$(this).addClass('text-danger');
+		$(static_currentDragBlock).detach();
+	});
+	$(static_recyclebin).children('.static-recyclebin-inner').mouseleave(function(){
+		$(this).removeClass('text-danger');
+	});
 });
 
 function staticEditor_addClickFunctions(){
@@ -56,32 +66,99 @@ function staticEditor_close(){
 }
 
 function staticEditor_launch(){
+	$('.static-block').mousedown(function(){
+		staticEditor_blockMousedown(this);
+		return false;
+	});
 	$('.static-editorLeftNav').removeClass('hidden');
 	$('.static-editorLaunch').addClass('hidden');
 	$('.static-editorClose').removeClass('hidden');
+	
+	//turn all blocks into flippers
+	$('.static-block').each(function(){
+		$(this).addClass('flip');
+		$(this).html(static_buildFlipper($(this).html(),'<h2>Settings</h2>'));
+		//TODO: create a settigns panel (edit content)
+	});
+	
 }
 
 /* BLOCK DRAGGING */
 
-function staticEditor_dragBlockStart(blockIndex){
-	//if supported, zoom out to 50%
-	static_pageZoom(1,static_zoom,500);
-
+function staticEditor_blockMousedown(block){
+	//TODO: add resize if the edges are selected
 	
-	//add the box at the bottom of the page
-	static_currentDragBlock = static_dragTargetTemplate.clone();
-	$('.static-block:last').after(static_currentDragBlock);
-	staticEditor_recalcRows();
+	//if the user keeps the mouse down on this block for 1 second, open the options. 
+	var mousedownTimer = setTimeout(function(){
+		//prevent the other outcomes from firing
+		$(block).unbind('mouseleave');
+		$(block).unbind('mouseup');
+		
+		//open settings for this block
+		console.log('flip');
+		
+		$(block).find('.card').addClass('flipped');
+		$(block).mouseleave(function(){
+			$(this).find('.card').removeClass('flipped');
+		});
+	},1000);	
+	
+	//If the user tries to drag the block, turn on drag mode. 
+	$(block).mouseleave(function(){
+		//prevent the other outcomes from firing
+		clearTimeout(mousedownTimer);
+		$(this).unbind('mouseleave');
+		$(this).unbind('mouseup');
+		//turn on drag mode for this block
+		staticEditor_dragBlockStart($(this).attr('data-static-blockid'), $(this));
+	});
+	//If the user raises the mouse, prevent drag mode from triggering
+	$(block).mouseup(function(){
+		//prevent the other outcomes from firing
+		clearTimeout(mousedownTimer);
+		$(this).unbind('mouseleave');
+		$(this).unbind('mouseup');
+	});
+	
+	
+	
+}
+
+function staticEditor_dragBlockStart(blockIndex,block){
+	//TODO: add recycle bin
+	$('body').append(static_recyclebin);
+	
+	//if supported, zoom out to 50%
+	static_pageZoom(1,static_zoom,100);
+
+	if (blockIndex == -1){
+		//add the box at the bottom of the page
+		static_currentDragBlock = static_dragTargetTemplate.clone();
+		$('.static-block:last').after(static_currentDragBlock);
+		staticEditor_recalcRows();
+	} else {
+		static_currentDragBlock = block;
+	}
+	
+	
 	
 	$('body').css('cursor', 'no-drop');
-	$('.static-block').css('cursor', 'none');
+	$('.static-block').css('cursor', 'move');
 	
-	/*
+	$('.row').mouseenter(function(event){
+		if (static_dragSelectorUnprocessedTargetChange){
+			static_dragSelectorUnprocessedTargetChange = false;
+			$(event.target).append(static_currentDragBlock);
+			staticEditor_recalcRows();
+		}
+	});
+	
 	$('.static-block').mousemove(function(event){
 		staticEditor_dragBlockMove(this,(event.pageX/static_zoom) - $(this)[0].getBoundingClientRect().left - window.scrollX);
 	});
-	*/
 	
+	
+	/*
 	$('.row').mousemove(function(event){
 		if ($(event.target).hasClass('row')){
 			if (static_dragSelectorUnprocessedTargetChange){
@@ -97,9 +174,10 @@ function staticEditor_dragBlockStart(blockIndex){
 			var targetBlock = $(event.target).parents('.static-block:first');
 			if ($(event.target).parents('.static-block:first').length > 0){
 				staticEditor_dragBlockMove(targetBlock,(event.pageX/static_zoom) - $(targetBlock)[0].getBoundingClientRect().left - window.scrollX);
-			}
+			} 
 		}
-	});
+	});*/
+	
 	
 	
 	//TODO: row mousemove (put it at the end of row) body mo
@@ -112,7 +190,6 @@ function staticEditor_dragBlockStart(blockIndex){
 		static_dragSelectorUnprocessedTargetChange = true;
 	});
 	
-	$('.static-block').mouseup(staticEditor_dragBlockComplete);
 	$('body').mouseup(staticEditor_dragBlockEnd);
 }
 
@@ -147,27 +224,28 @@ function staticEditor_dragBlockSelectRight (target){
 }
 
 
-function staticEditor_dragBlockComplete (){
-	console.log('drag complete');
-	
-}
-
 function staticEditor_dragBlockEnd (){
 	//reset zoom
-	static_pageZoom(static_zoom,1,500);
+	static_pageZoom(static_zoom,1,100);
 	
 	//turn off drag mode
 	$('.static-block').unbind('mouseup');
 	$('.static-block').unbind('mouseenter');
 	$('.static-block').unbind('mouseleave');
-	$('.row').unbind('mousemove');
+	$('.static-block').unbind('mousemove');
+	$('.row').unbind('mouseenter');
 	$('body').unbind('mouseup');
 	$('body').css('cursor', 'auto');
 	$('.static-block').css('cursor', 'auto');
 	
+	$('#static-recyclebin').detach();
+	
 	//add options to the new proto-block
 	var protoBlock = $('#static-editorDragTarget .static-protoBlockInterface');
-	$('#static-editorDragTarget').addClass('static-block').attr('id', '');
+	$('#static-editorDragTarget').addClass('static-block').attr('id', '').mousedown(function(){
+		staticEditor_blockMousedown(this);
+		return false;
+	});;
 	protoBlock.children('span, p').fadeOut("slow"); 
 	
 	staticEditor_addProtoBlockOption(protoBlock,static_protoBlockOptionContent.clone(),'-=27');
@@ -231,6 +309,7 @@ function staticEditor_recalcRows(){
 			//check if next row exists - create it if not. 
 			var nextRow = $(this).next()
 			if (nextRow.length == 0){
+				//TODO: use a template row so that it gets the hover enter
 				nextRow = $('<div class="row"></div>').insertAfter($(this));
 			}
 			$(this).children('div:last').prependTo(nextRow);
@@ -287,6 +366,10 @@ function static_pageZoom(oldScale,newScale, duration){
       }
   	});
 	
+}
+
+function static_buildFlipper(front,back){
+	return '<div class="card"><div class="face front">'+front+'</div><div class="face back">'+back+'</div></div>';
 }
 
 
