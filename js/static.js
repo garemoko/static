@@ -209,6 +209,7 @@ function static_buildNavLink (linkObj){
 	if (linkObj.hasOwnProperty('page')){
 		linkHtml.click(function(){
 			static_changePage(linkObj.page);
+			return false;
 		});
 		linkHtml.attr('data-static-page', linkObj.page)
 	}

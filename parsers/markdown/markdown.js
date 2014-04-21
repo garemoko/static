@@ -7,8 +7,9 @@ function static_markdownParser(content, target) {
 	//convert in site links
 	htmlToAdd.find('a').each(function(index){
 		if ($(this).is('[data-static-page]')) {
-			$(this).click(function(){
+			$(this).click(function(event){
 				static_changePage($(this).attr('data-static-page'));
+				return false;
 			});
 		}
 	});

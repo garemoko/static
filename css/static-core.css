@@ -1,3 +1,8 @@
+
+.static-block {
+	overflow:hidden;
+}
+
 /* FOOTER */
 
 html {
@@ -19,7 +24,7 @@ body {
 }
 
 #static-recyclebin{
-	position: absolute;
+	position: fixed;
   	bottom:50px;
   	right:50px;
 }
@@ -116,6 +121,14 @@ margin: 25px auto;
 
 .static-protoBlockInterface-option .glyphicon:hover {
 	color: #AFFF7C;
+}
+
+.cursorNone {
+	cursor:none !important;
+}
+
+.static-resizeActive{
+	background-color:#aaa;
 }
 
 /* fix for space on right of glyphicon */
