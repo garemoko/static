@@ -1,6 +1,7 @@
 
 .static-block {
 	overflow:hidden;
+	
 }
 
 /* FOOTER */
@@ -142,3 +143,10 @@ nav a {
 	cursor: pointer;
 }
 
+
+/* CONTAINER */
+
+.static-sub{
+	margin: 10px;
+	border:2px dashed;
+}

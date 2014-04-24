@@ -4,31 +4,19 @@ static_dragSelectorUnprocessedTargetChange = false,
 static_currentDragBlock, 
 static_zoom = 0.5;
 
+//templates
+var static_dragTargetTemplate,
+static_recyclebin,
+static_protoBlockOptionContent;
 
-var static_dragTargetTemplate = $('<div id="static-editorDragTarget" class="col-md-4"></div>');
-static_dragTargetTemplate.append('<div class="static-protoBlockInterface"><span class="glyphicon glyphicon-question-sign"></span><p>New Block</p></div>');
-
-var static_recyclebin = $('<div id="static-recyclebin"></div>');
-static_recyclebin.append('<div class="static-recyclebin-inner"><span class="glyphicon glyphicon-trash"></span><p>Bin</p></div>');
-
-var static_protoBlockOptionContent = $('<div class="static-protoBlockInterface-option" class="hidden"><span class="glyphicon glyphicon-align-center"></span><p>Content</p></div>'),
-static_protoBlockOptionContainer = $('<div class="static-protoBlockInterface-option" class="hidden"><span class="glyphicon glyphicon-th"></span><p>Container</p></div>'),
-static_protoBlockOptionDesc = $('<div style="width:100%;height:150px;"></div><p>What type of block is this?</p>');
 //End Globals
-
 
 
 
 $(function(){
 	staticEditor_addClickFunctions();	
+	staticEditor_setupTemplates();
 	
-	$(static_recyclebin).children('.static-recyclebin-inner').mouseenter(function(){
-		$(this).addClass('text-danger');
-		$(static_currentDragBlock).detach();
-	});
-	$(static_recyclebin).children('.static-recyclebin-inner').mouseleave(function(){
-		$(this).removeClass('text-danger');
-	});
 });
 
 function staticEditor_addClickFunctions(){
@@ -46,7 +34,7 @@ function staticEditor_addClickFunctions(){
 		
 	});
 	$('.static-editorSave').click(function(){
-		
+		//TODO: update the working site def as we go to preserve changes as we navigate round the site. 
 	});
 	$('.static-editorLaunch').click(function(){
 		staticEditor_launch();
@@ -60,12 +48,16 @@ function staticEditor_close(){
 	//TODO: tidy up any other open editor stuff
 	//TODO: warning! Please save first!
 	
+
+	
 	$('.static-editorLeftNav').addClass('hidden');
 	$('.static-editorLaunch').removeClass('hidden');
 	$('.static-editorClose').addClass('hidden');
 }
 
 function staticEditor_launch(){
+	//TODO: add a 1px border on blocks
+	
 	$('.static-block').mousedown(function(event){
 		staticEditor_blockMousedown(this,event);
 		return false;
@@ -87,13 +79,30 @@ function staticEditor_launch(){
 
 function staticEditor_blockMousedown(block,event){
 	
-	/*TODO: work out why links are not working in edit mode and deicde if this is a bad thing. See http://api.jquery.com/event.stoppropagation/
+	//For some reason the click event on links wasn't firing in edit mode. This fixes it. 
 	if ($(event.target).is('a')){
-		return false;
-	}*/
+		$(block).mouseup(function(){
+			$(block).unbind('mouseup');
+			static_changePage($(event.target).attr('data-static-page'));
+		});
+	}
+	
+	if ($(event.target).is('.static-protoBlockInterface-option-container') || ($(event.target).parent().is('.static-protoBlockInterface-option-container'))){
+		$(block).mouseup(function(){
+			$(block).unbind('mouseup');
+			staticEditor_createContainer(this);
+		});
+	}
+	
+	if ($(event.target).is('.static-protoBlockInterface-option-content')|| ($(event.target).parent().is('.static-protoBlockInterface-option-content'))){
+		$(block).mouseup(function(){
+			$(block).unbind('mouseup');
+			staticEditor_createContent(this);
+		});
+	}
 	
 	//if the user keeps the mouse down on this block for 1 second, open the options. 
-	var mousedownTimer = setTimeout(function(){
+	var mousedownTimer = setTimeout(function(){ //TODO: make this work for blocks in containers
 		//prevent the other outcomes from firing
 		$(block).unbind('mouseleave');
 		$(block).unbind('mouseup');
@@ -161,24 +170,11 @@ function staticEditor_dragBlockStart(blockIndex,block){
 	}
 	
 	$('body').css('cursor', 'no-drop');
-	$('.static-block').css('cursor', 'move');
+	$('.row').css('cursor', 'move');
 	
-	$('.row').mouseenter(function(event){
-		if (static_dragSelectorUnprocessedTargetChange){
-			static_dragSelectorUnprocessedTargetChange = false;
-			$(this).append(static_currentDragBlock);
-			staticEditor_recalcRows($(this).parent('.container'));
-		}
+	$('.row').mousemove(function(event){
+		staticEditor_handleDrag(event.target,event);
 	});
-	
-	$('.static-block').mousemove(function(event){
-		staticEditor_dragBlockMove(this,(event.pageX/static_zoom) - $(this)[0].getBoundingClientRect().left);
-	});
-	
-	
-	
-	
-	//TODO: row mousemove (put it at the end of row) body mo
 	
 	$('.static-block').hover(function(){
 		static_dragSelectorUnprocessedTargetChange = true;
@@ -190,6 +186,50 @@ function staticEditor_dragBlockStart(blockIndex,block){
 	
 	$('body').mouseup(staticEditor_dragBlockEnd);
 }
+
+function staticEditor_handleDrag(target,event){
+	if (target == false){
+	
+	} else if ($(target).is('.row')){
+		if (static_dragSelectorUnprocessedTargetChange){
+			static_dragSelectorUnprocessedTargetChange = false;
+			$(target).append(static_currentDragBlock);
+			staticEditor_recalcRows($(target).parent());
+		}
+	} else if ($(target).is('.static-block')){
+		staticEditor_dragBlockMove(target,(event.pageX/static_zoom) - $(target)[0].getBoundingClientRect().left);
+	} else if ($(target).is('.static-editorDragTarget')){
+		//do nothing
+	} else
+	{
+		staticEditor_handleDrag(staticEditor_getMatchingParent(target,['row','static-block','static-editorDragTarget']),event);
+	}
+}
+
+function staticEditor_getMatchingParent(element,classes){	
+	var parent = $(element).parent();
+	var match = false;
+	//if we reached the top of the tree, return false
+	if (parent.is('body')){
+		return false;
+	}
+	
+	//if we have a match, return it
+	$.each(classes, function(index, value){
+		if (parent.hasClass(value)){
+			match = true;
+			
+		}
+	});
+	
+	if (match){
+		return parent;
+	}else{
+		//else, keep moving up. 
+		return staticEditor_getMatchingParent(parent,classes);
+	}
+}
+
 
 function staticEditor_dragBlockMove(target,mouseX){
 	if (mouseX < ($(target)[0].getBoundingClientRect().width/2)){
@@ -230,11 +270,11 @@ function staticEditor_dragBlockEnd (){
 	$('.static-block').unbind('mouseup');
 	$('.static-block').unbind('mouseenter');
 	$('.static-block').unbind('mouseleave');
-	$('.static-block').unbind('mousemove');
+	$('.row').unbind('mousemove');
 	$('.row').unbind('mouseenter');
 	$('body').unbind('mouseup');
 	$('body').css('cursor', '');
-	$('.static-block').css('cursor', '');
+	$('row').css('cursor', '');
 	
 	$('#static-recyclebin').detach();
 	
@@ -285,7 +325,6 @@ function staticEditor_resizeBlockStart(block,clickXIndex){
 		//reset zoom
 		static_pageZoom(static_zoom,1,100);
 		
-		$('body').unbind('mouseup');
 		$('body').unbind('mousemove');
 		$('body').unbind('mouseup');
 
@@ -340,6 +379,40 @@ function staticEditor_resizeBlock(event, referenceX, block){
 	$(block).addClass('col-md-' + newBlockWidth);
 }
 
+/* TEMPLATE BLOCK FUNCTIONS */
+function staticEditor_setupTemplates()
+{
+	//Drag template
+	static_dragTargetTemplate = $('<div id="static-editorDragTarget" class="static-editorDragTarget col-md-4"></div>');
+	static_dragTargetTemplate.append('<div class="static-protoBlockInterface"><span class="glyphicon glyphicon-question-sign"></span><p>New Block</p></div>');
+	
+	//recycle bin
+	static_recyclebin = $('<div id="static-recyclebin"></div>');
+	static_recyclebin.append('<div class="static-recyclebin-inner"><span class="glyphicon glyphicon-trash"></span><p>Bin</p></div>');
+	$(static_recyclebin).children('.static-recyclebin-inner').mouseenter(function(){
+		$(this).addClass('text-danger');
+		$(static_currentDragBlock).detach();
+	});
+	$(static_recyclebin).children('.static-recyclebin-inner').mouseleave(function(){
+		$(this).removeClass('text-danger');
+	});
+	
+	//Proto-blocks
+	static_protoBlockOptionContent = $('<div class="static-protoBlockInterface-option static-protoBlockInterface-option-content" class="hidden"><span class="glyphicon glyphicon-align-center"></span><p>Content</p></div>'),
+	static_protoBlockOptionContainer = $('<div class="static-protoBlockInterface-option static-protoBlockInterface-option-container" class="hidden"><span class="glyphicon glyphicon-th"></span><p>Container</p></div>'),
+	static_protoBlockOptionDesc = $('<div style="width:100%;height:150px;"></div><p>What type of block is this?</p>');
+}
+
+function staticEditor_createContainer (block){
+	console.log('container');
+	var container = $('<div class="static-sub"></div>');		
+	container.append($('.row:last').clone().empty());
+	$(block).html(container);
+}
+
+function staticEditor_createContent (block){
+	console.log('content');
+}			
 
 /* WIDTH AND ROW FUNCTIONS */
 

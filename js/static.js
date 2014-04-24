@@ -3,6 +3,7 @@ var static_load_timestamp = new Date().getTime(),
 static_parsersLoaded = false,
 static_stuctureLoaded = false,
 static_contentLoaded = false,
+static_parserDependanciesOutstanding = 0,
 static_firstRender = true,
 static_content = [],
 static_siteDefinitionAddress,
@@ -10,7 +11,45 @@ static_siteDefinition,
 static_currentPage;
 //End Globals
 
+/**
+Static
+
+@module Static
+**/
+var Static = function(){
+	this.init();
+};
+
+Static.prototype = {
+	/**
+        @method init
+    */
+	init: function(){
+		this.parsers = new Static.parsers;
+	}
+}; 
+
+/**
+Static
+
+@module Static
+@submodule Static
+
+Parser objects are added to this submodule when loaded. 
+**/
+var parsers = Static.parsers = function (){
+	
+}
+
+parsers.prototype = {
+	
+};
+
+var static = new Static('');
+
+//Document ready
 $(function(){
+	
 	//Get the address of the site definition  from the querystring or use a default
 	static_siteDefinitionAddress = $.getUrlVar('sd');
 	static_siteDefinitionAddress = (typeof static_siteDefinitionAddress === 'undefined') ? 'https://googledrive.com/host/0B9fyoDEGTP0NV29BZWhQMDVHX00' : static_siteDefinitionAddress;
@@ -22,6 +61,8 @@ $(function(){
 	static_getstatic_siteDefinition(static_siteDefinitionAddress, static_currentPage);
 	
 });
+
+
 
 //TODO: class
 function static_getstatic_siteDefinition (static_siteDefinitionAddress, static_currentPage){
@@ -99,28 +140,20 @@ function static_renderStructure (){
 	return true;
 }; 
 
-function static_loadParsers (groupIndex){
-	var function_counter = static_siteDefinition.pages[static_currentPage].parsers[groupIndex].length;
+function static_loadParsers (){
+	var function_counter = static_siteDefinition.pages[static_currentPage].parsers.length;
 	//load each parser script
-	$.each(static_siteDefinition.pages[static_currentPage].parsers[groupIndex], function(index,value){
+	$.each(static_siteDefinition.pages[static_currentPage].parsers, function(index,value){
+		
 		$.getScript(value, function(){
 			function_counter--;
+			
 			//if this is the last parser to be got in this priority group...
 			if (function_counter == 0)
 			{
-				console.log('%c Static:', 'color:#a64802',' Loading parser group ' + groupIndex + ' took ' + ((new Date().getTime() - static_load_timestamp)/1000) + ' seconds.');
-				groupIndex++;
-				if (groupIndex == static_siteDefinition.pages[static_currentPage].parsers.length){
-					//proceed to load site content
-					console.log('%c Static:', 'color:#a64802',' Loading all parsers took ' + ((new Date().getTime() - static_load_timestamp)/1000) + ' seconds.');
-					static_parsersLoaded = true;
-					if (static_allLoaded()){
-						static_renderContent();
-					}
-				}
-				else { //load the next priority group
-					static_loadParsers(groupIndex);
-				}
+				//proceed to load any dependancies
+				console.log('%c Static:', 'color:#a64802',' Loading all parsers took ' + ((new Date().getTime() - static_load_timestamp)/1000) + ' seconds.');
+				static_loadParserDependnacies ();
 			}
 		}).fail(function(){
 		    if(arguments[0].readyState==0){
@@ -131,6 +164,34 @@ function static_loadParsers (groupIndex){
 		    }
 		});
 	});
+}
+
+function static_loadParserDependnacies (){
+	$.each(static.parsers, function(parserIndex,parser){
+		$.each(parser.dependancies, function(dependnacyIndex,dependancy){
+			static_parserDependanciesOutstanding++;
+			$.getScript(dependancy, function(){
+				static_parserDependanciesOutstanding--
+				if (static_parserDependanciesOutstanding == 0){
+					static_parserDependnaciesLoaded();
+				}
+			});
+		});
+	});
+	
+	//If no scripts have been sent for..
+	if (static_parserDependanciesOutstanding == 0){
+		static_parserDependnaciesLoaded();
+	}
+}
+
+function static_parserDependnaciesLoaded(){
+	//proceed to load site content
+	console.log('%c Static:', 'color:#a64802',' Loading parser dependancies took ' + ((new Date().getTime() - static_load_timestamp)/1000) + ' seconds.');
+	static_parsersLoaded = true;
+	if (static_allLoaded()){
+		static_renderContent();
+	}	
 }
 
 function static_loadContent (){
@@ -235,8 +296,9 @@ function static_renderContent(){
 	$('.static-block').each(function(index){
 		boxid = $(this).attr('data-static-blockid');
 		//call the correct parser to add the content (if defined in the sitedef)
-		if (typeof static_siteDefinition.pages[static_currentPage].blocks[boxid] !== 'undefined' && typeof static_siteDefinition.pages[static_currentPage].blocks[boxid].parser !== 'undefined'){
-			window[static_siteDefinition.pages[static_currentPage].blocks[boxid].parser](static_content[index], $(this));
+		var currentParser = static_siteDefinition.pages[static_currentPage].blocks[boxid].parser;
+		if (typeof static_siteDefinition.pages[static_currentPage].blocks[boxid] !== 'undefined' && typeof currentParser !== 'undefined'){
+			static.parsers[currentParser].parse(static_content[index], $(this));
 		} else {
 			$(this).addClass('hidden');
 		}
