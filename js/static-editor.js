@@ -226,6 +226,7 @@ function staticEditor_handleDrag(target, event) {
 
 	if(target == false) {
 		//We tried to see if the parent was anything interesting and bubbled up to teh body without finding anything
+
 	} else if($(target).hasClass('row')) {
 		//If we're not trying to drag the block onto its parent row or its children (it might be a container)
 		if(!($(target)[0] == static_currentDragBlock.parent()[0]) && !(staticEditor_isAncestor($(target), static_currentDragBlock))) {
@@ -249,7 +250,7 @@ function staticEditor_handleDrag(target, event) {
 	} else if($(target).hasClass('static-editorDragTarget')) {
 		//We're dragging the block over itself. Do nothing
 	} else {
-		//its an unknown object, so probably a child - see if it's parent matches anythinf interesting.
+		//its an unknown object, so probably a child - see if it's parent matches anything interesting.
 		staticEditor_handleDrag(staticEditor_getMatchingParentByClass(target, ['row', 'static-block', 'static-editorDragTarget']), event);
 	}
 }
@@ -566,62 +567,69 @@ function static_removeFlipper(target){
 
 function staticEditor_recalcRows() {
 
-	$('.static-sub, .static-main .card .front').each(function(index, container) {
-
-		$(container).find('.row').each(function(index) {
-
-			var rowWidth = staticEditor_getRowWidth(this), fuse = 0;
-			//Note: the fuse should not be needed, but stops the browser crashing in the event the while loop goes wrong.
-
-			//if the row is not full, grab blocks from the next row to fill it up until overflowing
-
-			while((rowWidth < 12) && (fuse < 13)) {
-				var divToAppend = $(this).next().children('div:first');
-				if(divToAppend.length > 0) {
-					divToAppend.appendTo($(this));
-					rowWidth = staticEditor_getRowWidth(this);
-				} else {
-					break;
-				}
-				fuse++;
-				if(fuse == 13) {
-					console.log('fuse blown - check the code')
-				}
-			}
-
-			fuse = 0;
-
-			//Empty blocks back into the next row until no longer overflowing
-			while((rowWidth > 12) && (fuse < 13)) {
-				//check if next row exists - create it if not.
-				var nextRow = $(this).next()
-				if(nextRow.length == 0) {
-					//TODO: use a template row so that it gets the hover enter
-					nextRow = $(this).clone().empty().insertAfter($(this));
-				}
-				$(this).children('div:last').prependTo(nextRow);
-				rowWidth = staticEditor_getRowWidth(this);
-				fuse++;
-				if(fuse == 13) {
-					console.log('fuse blown - check the code')
-				}
-			}
-
-			//remove empty rows after processing
-			if(rowWidth == 0) {
-				$(this).remove();
-			}
-
-		});
-		
-		//remove the row-last flag from the current bottom row (if it has it)
-		//$(container).children('.row-last').removeClass('row-last');
-		
-		if ($(container).children('.row').length ==0){
-			$('body').find('.row:last').clone().empty().appendTo($(container)).addClass('row-last');
-		}
-		
+	$('.static-main').children('.card').children('.front').each(function(index, container) {
+		staticEditor_recalcRowsInContainer(container)
 	});
+	$('.static-sub').each(function(index, container) {
+		staticEditor_recalcRowsInContainer(container)
+	});
+	
+	$('body').find('.row:last').clone().empty().appendTo($('.static-main').children('.card').children('.front')).addClass('row-last');
+}
+
+function staticEditor_recalcRowsInContainer(container) {
+	$(container).children('.row').each(function(index) {
+
+		var rowWidth = staticEditor_getRowWidth(this), fuse = 0;
+		//Note: the fuse should not be needed, but stops the browser crashing in the event the while loop goes wrong.
+
+		//if the row is not full, grab blocks from the next row to fill it up until overflowing
+
+		while((rowWidth < 12) && (fuse < 13)) {
+			var divToAppend = $(this).next().children('div:first');
+			if(divToAppend.length > 0) {
+				divToAppend.appendTo($(this));
+				rowWidth = staticEditor_getRowWidth(this);
+			} else {
+				break;
+			}
+			fuse++;
+			if(fuse == 13) {
+				console.log('fuse blown - check the code')
+			}
+		}
+
+		fuse = 0;
+
+		//Empty blocks back into the next row until no longer overflowing
+		while((rowWidth > 12) && (fuse < 13)) {
+			//check if next row exists - create it if not.
+			var nextRow = $(this).next()
+			if(nextRow.length == 0) {
+				//TODO: use a template row so that it gets the hover enter
+				nextRow = $(this).clone().empty().insertAfter($(this));
+			}
+			$(this).children('div:last').prependTo(nextRow);
+			rowWidth = staticEditor_getRowWidth(this);
+			fuse++;
+			if(fuse == 13) {
+				console.log('fuse blown - check the code')
+			}
+		}
+
+		//remove empty rows after processing
+		if(rowWidth == 0) {
+			$(this).remove();
+		}
+
+	});
+	
+	//remove the row-last flag from the current bottom row (if it has it)
+	//$(container).children('.row-last').removeClass('row-last');
+	
+	if ($(container).children('.row').length ==0){
+		$('body').find('.row:last').clone().empty().appendTo($(container)).addClass('row-last');
+	}
 }
 
 function staticEditor_getRowWidth(row) {
