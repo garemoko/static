@@ -65,11 +65,33 @@ body {
 
 	position: absolute;
 	top: 0px;
-margin: 25px auto;
+	left: 0;
+	margin: 25px auto;
   
 }
 
 /* EDITOR */
+
+.static-settings{
+	position: absolute;
+	top:0;
+	left:0;
+}
+
+.static-resizer{
+	position: absolute;
+	height: 100%;
+	width: 50px;
+	right: 0px;
+	top: 0px;
+	background-color: #AFFF7C;
+	color: #fff;
+	font-size: 50px;
+	border-radius: 25px;
+	z-index: 1;
+
+}
+
 #static-editorDragTarget{
 	cursor: move;
 }
@@ -82,7 +104,6 @@ margin: 25px auto;
 	
 	height: 250px;
 	width: 250px;
-	border: dashed 3px;
 	margin: 22px auto;
 	text-align: center;
 	background-color: #ccc;
@@ -138,6 +159,16 @@ margin: 25px auto;
 	margin-right: -10px;
 }
 
+.static-sub-editor{
+	margin: 10px;
+	border:3px dashed;
+}
+
+.static-block-editor{
+	border:3px solid;
+}
+
+
 /* NAV */
 nav a {
 	cursor: pointer;
@@ -146,7 +177,3 @@ nav a {
 
 /* CONTAINER */
 
-.static-sub{
-	margin: 10px;
-	border:2px dashed;
-}
