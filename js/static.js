@@ -106,10 +106,13 @@ function static_renderStructure (){
 		var blockHtml = $('<div class="static-block"></div>');
 		//set the index
 		blockHtml.attr('data-static-blockid', index);
+		
 		//add any classes e.g. jumbotron 
 		if (blockObj.hasOwnProperty('classes')){
 			blockHtml.addClass(blockObj.classes);
 		}
+		
+		
 		//add bootstrap width
 		if (!blockObj.hasOwnProperty('width')){
 			blockObj.width = 4;
@@ -125,6 +128,28 @@ function static_renderStructure (){
 		
 		//add the block to the bottom row		
 		$('.row:last').append(blockHtml);
+		
+		//add the site defintion data into the DOM for later.
+		var dataAttributes = [
+			{
+				'type' : 'blockType',
+				'defaultValue' : 'content'
+			},
+			{
+				'type' : 'parser'
+			},
+			{
+				'type' : 'contentAddress'
+			},
+			{
+				'type' : 'classes'
+			},
+			{
+				'type' : 'width'
+			}
+		];
+		static_addBlockData(blockHtml,blockObj,dataAttributes);
+		
 	});
 	
 	//add one empty row at the bottom
@@ -139,6 +164,17 @@ function static_renderStructure (){
 
 	return true;
 }; 
+
+function static_addBlockData (block, blockObj, attributes){
+	$.each(attributes, function(index, attribute){
+		if (blockObj.hasOwnProperty(attribute.type)){
+			$(block).attr('data-static-' + attribute.type, blockObj[attribute.type]);
+		} 
+		else if (attribute.hasOwnProperty('defaultValue')){
+			$(block).attr('data-static-' + attribute.type, attribute.defaultValue);
+		}
+	});
+}
 
 function static_loadParsers (){
 	var function_counter = static_siteDefinition.pages[static_currentPage].parsers.length;
@@ -198,7 +234,7 @@ function static_loadContent (){
 	//for each static box
 	var block_counter = static_siteDefinition.pages[static_currentPage].blocks.length;
 	$.each(static_siteDefinition.pages[static_currentPage].blocks,function(index,block){
-		$.get(block.content, function (data){
+		$.get(block.contentAddress, function (data){
 			static_content[index] = data;
 		}).fail(function(data) {
 		    static_content[index] = '';

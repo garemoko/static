@@ -60,13 +60,10 @@ body {
 }
 .flip .card .back {
   -webkit-transform: rotatex(180deg);
-  height: 250px;
-	width: 250px;
-
 	position: absolute;
 	top: 0px;
 	left: 0;
-	margin: 25px auto;
+	margin: auto;
   
 }
 

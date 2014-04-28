@@ -86,10 +86,10 @@ function staticEditor_launch() {
 	$('.static-block').each(function() {
 		
 		//add resize handles
-		$(this).append(static_resizeHandles ());
+		$(this).append(staticEditor_resizeHandles ());
 	});
 	
-	static_buildFlipper($('.static-main'), $('.static-main').children(), static_blockSettings ());
+	static_buildFlipper($('.static-main'), $('.static-main').children(), staticEditor_settings ());
 	
 	//if supported, zoom out to 50%
 	static_pageZoom(1, static_zoom, 100);
@@ -137,13 +137,17 @@ function staticEditor_blockMousedown(event) {
 		$(block).unbind('mousemove');
 
 		//open settings for this block
-		$('.static-main').children('.card').addClass('flipped');
+		var card = $('.static-main').children('.card');
+		card.addClass('flipped');
 		
 		$('.static-main').mouseleave(function() {
 			//TODO: save settings
 			//TODO: close button
-			$('.static-main').children('.card').removeClass('flipped');
-		});/**/
+			card.removeClass('flipped');
+		});
+		
+		staticEditor_addBlockSettings(card.find('.static-settings'), block);
+		
 	}, 1000);
 
 	//if the reszier has been selected and the user tries to drag the block, resize it
@@ -177,6 +181,14 @@ function staticEditor_blockMousedown(event) {
 	});
 
 }
+//=========OPEN SETTINGS========
+
+function staticEditor_addBlockSettings(settingsBlock, block) {
+	settingsBlock.empty();
+	settingsBlock.append('<h2>Block settings</h2>');
+	
+}
+
 
 //==========MOVE BLOCK========
 
@@ -465,12 +477,12 @@ function staticEditor_setupTemplates() {
 
 	//static block template
 	static_blockTemplate = $('<div class="static-block static-block-editor col-md-4" data-static-blockid="x"></div>');
-	static_buildFlipper(static_blockTemplate, static_blockTemplate.html(), static_blockSettings ());
-	static_blockTemplate.append(static_resizeHandles ());
+	static_buildFlipper(static_blockTemplate, static_blockTemplate.html(), staticEditor_settings ());
+	static_blockTemplate.append(staticEditor_resizeHandles ());
 	
 }
 
-function static_resizeHandles (){
+function staticEditor_resizeHandles (){
 	
 	
 	var resizeHandles = $('<div class="static-resizer"></div>');
@@ -483,12 +495,10 @@ function static_resizeHandles (){
 	return resizeHandles;
 }
 
-function static_blockSettings (){
-	var settingsContainer = $('<div></div>');
+function staticEditor_settings (){
+	var settingsContainer = $('<div></div>').addClass('static-settings col-md-12');
 	settingsContainer.css('MozTransform', 'scale(' + (1/static_zoom) + ')');
 	settingsContainer.css('zoom', ' ' + ((1/static_zoom) * 100) + '%');
-	
-	settingsContainer.append('<h2>Settings</h2>');
 	
 	return settingsContainer;
 }
@@ -528,7 +538,7 @@ function staticEditor_createContainer(block) {
 	container.append(row);
 	//put the container in the block
 	$(block).html(container);
-	$(block).append(static_resizeHandles ());
+	$(block).append(staticEditor_resizeHandles ());
 
 	staticEditor_recalcRows();
 }
@@ -719,5 +729,40 @@ function static_pageZoom(oldScale, newScale, duration) {
 		}
 	});
 
+}
+
+
+/*  SAVE FUNCTIONS */
+//TODO: call this function at revelant points!!! Currently it is not called at all. 
+function staticEditor_updateInternalSiteDefPageBlocks(){
+	
+	var newBlocks = [],
+	topBlocks = $('.row:first').parent().children('.row').children('.static-block');
+	
+	topBlocks.each(function(index,block){
+		newBlocks.push(staticEditor_getBlockData(block));
+	});
+
+}
+
+function staticEditor_getBlockData(block){
+	var newBlockData = {};
+	newBlockData.classes = $(block).attr('data-static-classes');
+	newBlockData.width = staticEditor_getBlockWidth(block);
+	
+	if ($(block).attr('data-static-blockType') == 'content'){
+		newBlockData.parser = $(block).attr('data-static-parser');
+		newBlockData.contentAddress = $(block).attr('data-static-contentAddress'); //check if this is case senstive. If it works, its OK!
+	} 
+	else if ($(block).attr('data-static-blockType') == 'container'){
+		newBlockData.children = [];
+		var topBlocks = $(block).children().children('.row').children('.static-block');
+		
+		topBlocks.each(function(index,childBlock){
+			newBlockData.children.push(staticEditor_getBlockData(childBlock));
+		});
+	}
+	
+	return newBlockData;
 }
 
