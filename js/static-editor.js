@@ -43,13 +43,13 @@ function staticEditor_addClickFunctions() {
 		staticEditor_launch();
 	});
 	$('.static-editorClose').click(function() {
-		staticEditor_close();
+		static_changePage(static_currentPage)
+		
 	});
 }
 
 function staticEditor_close() {
 	//TODO: tidy up any other open editor stuff
-	//TODO: warning! Please save first!
 
 	$('.static-editorLeftNav').addClass('hidden');
 	$('.static-editorLaunch').removeClass('hidden');
@@ -58,13 +58,12 @@ function staticEditor_close() {
 	$('.static-sub-editor').removeClass('static-sub-editor');
 	$('.static-block-editor').removeClass('static-block-editor');
 	
+	$('body').unbind('mousedown');
 	
 	static_removeFlipper($('.static-main'));
 	
-	$('.static-resizer').remove();
-	
 	//reset zoom
-	static_pageZoom(static_zoom, 1, 100);
+	static_pageZoom(1, 100);
 }
 
 function staticEditor_launch() {
@@ -92,7 +91,7 @@ function staticEditor_launch() {
 	static_buildFlipper($('.static-main'), $('.static-main').children(), staticEditor_settings ());
 	
 	//if supported, zoom out to 50%
-	static_pageZoom(1, static_zoom, 100);
+	static_pageZoom(static_zoom, 100);
 
 }
 
@@ -204,7 +203,9 @@ function staticEditor_dragBlockStart(blockIndex, block) {
 		//add the box at the bottom of the page
 		static_currentDragBlock = static_dragTargetTemplate.clone();
 		$('.static-block:last').after(static_currentDragBlock);
+		
 		staticEditor_recalcRows();
+		staticEditor_updateInternalSiteDefPageBlocks();
 	} else {
 		static_currentDragBlock = block;
 	}
@@ -369,7 +370,7 @@ function staticEditor_dragBlockEnd(blockIndex) {
 	if( blockIndex == -1) {
 		var protoBlock = static_blockTemplate.clone(true);
 
-		protoBlock.find('.front').append(static_protoBlockInterface.clone());
+		protoBlock.append(static_protoBlockInterface.clone());
 
 		$('#static-editorDragTarget').replaceWith(protoBlock);
 
@@ -378,6 +379,7 @@ function staticEditor_dragBlockEnd(blockIndex) {
 	}
 	
 	staticEditor_recalcRows();
+	staticEditor_updateInternalSiteDefPageBlocks();
 
 }
 
@@ -421,6 +423,7 @@ function staticEditor_resizeBlockEnd(block){
 		$('body').removeClass('cursorNone');
 		$(block).removeClass('static-resizeActive');
 		staticEditor_recalcRows();
+		staticEditor_updateInternalSiteDefPageBlocks();
 }
 
 function staticEditor_resizeBlock(event, referenceLeft, referenceRight, block) {
@@ -477,7 +480,6 @@ function staticEditor_setupTemplates() {
 
 	//static block template
 	static_blockTemplate = $('<div class="static-block static-block-editor col-md-4" data-static-blockid="x"></div>');
-	static_buildFlipper(static_blockTemplate, static_blockTemplate.html(), staticEditor_settings ());
 	static_blockTemplate.append(staticEditor_resizeHandles ());
 	
 }
@@ -530,6 +532,8 @@ function staticEditor_makeProtoblockInterface(block) {
 }
 
 function staticEditor_createContainer(block) {
+	$(block).attr('data-static-blockType', 'container');
+	
 	//create a container
 	var container = $('<div class="static-sub static-sub-editor"></div>');
 	//create a row by copying the last row on the DOM
@@ -541,12 +545,16 @@ function staticEditor_createContainer(block) {
 	$(block).append(staticEditor_resizeHandles ());
 
 	staticEditor_recalcRows();
+	staticEditor_updateInternalSiteDefPageBlocks();
 }
 
 function staticEditor_createContent(block) {
-	$(block).find('.front').html('<h2>Add content here...</h2><p>Hold mouse down here to flip.</p>');
-
+	$(block).attr('data-static-blockType', 'content');
 	
+	$(block).html('<h2>Add content here...</h2><p>Hold mouse down here to flip.</p>');
+	$(block).append(staticEditor_resizeHandles ());
+
+	staticEditor_updateInternalSiteDefPageBlocks();
 }
 
 function static_buildFlipper(target, front, back) {
@@ -580,6 +588,8 @@ function staticEditor_recalcRows() {
 	$('.static-main').children('.card').children('.front').each(function(index, container) {
 		staticEditor_recalcRowsInContainer(container)
 	});
+	
+	
 	$('.static-sub').each(function(index, container) {
 		staticEditor_recalcRowsInContainer(container)
 	});
@@ -634,12 +644,14 @@ function staticEditor_recalcRowsInContainer(container) {
 
 	});
 	
-	//remove the row-last flag from the current bottom row (if it has it)
-	//$(container).children('.row-last').removeClass('row-last');
+	//remove the row-last flag from all rows.
+	$(container).children('.row-last').removeClass('row-last');
 	
 	if ($(container).children('.row').length ==0){
 		$('body').find('.row:last').clone().empty().appendTo($(container)).addClass('row-last');
 	}
+	
+	
 }
 
 function staticEditor_getRowWidth(row) {
@@ -705,30 +717,32 @@ function staticEditor_adjustBlockWidth(block, targetRelativeWidth){
 }
 
 
-function static_pageZoom(oldScale, newScale, duration) {
-	var originalBodyWidth = ($('body').width());
-	$({
-		scale : oldScale
-	}).animate({
-		scale : newScale
-	}, {
-		duration : duration,
-		easing : 'swing',
-		step : function() {
-			$('body').css('MozTransform', 'scale(' + this.scale + ')');
-			$('body').css('zoom', ' ' + (this.scale * 100) + '%');
-			$('#footer').css('MozTransform', 'scale(' + (1/this.scale) + ')');
-			$('#footer').css('zoom', ' ' + ((1/this.scale) * 100) + '%');
-		},
-		complete : function() {
-			//if the page has not scaled, it's not supported so tell the rest of the code we haven't zoomed.
-			if($('body')[0].getBoundingClientRect().width == originalBodyWidth) {
-				console.log('zoom not supported');
-				static_zoom = 1;
+function static_pageZoom(newScale, duration) {
+	if (!($('body').css('zoom') == newScale))
+	{
+		var originalBodyWidth = ($('body').width());
+		$({
+			scale : ($('body').css('zoom')/100)
+		}).animate({
+			scale : newScale
+		}, {
+			duration : duration,
+			easing : 'swing',
+			step : function() {
+				$('body').css('MozTransform', 'scale(' + this.scale + ')');
+				$('body').css('zoom', ' ' + this.scale);
+				$('#footer').css('MozTransform', 'scale(' + (1/this.scale) + ')');
+				$('#footer').css('zoom', ' ' + (1/this.scale));
+			},
+			complete : function() {
+				//if the page has not scaled, it's not supported so tell the rest of the code we haven't zoomed.
+				if($('body')[0].getBoundingClientRect().width == originalBodyWidth) {
+					console.log('zoom not supported');
+					static_zoom = 1;
+				}
 			}
-		}
-	});
-
+		});
+	}
 }
 
 
@@ -743,11 +757,15 @@ function staticEditor_updateInternalSiteDefPageBlocks(){
 		newBlocks.push(staticEditor_getBlockData(block));
 	});
 
+	//update the internal site definition
+	static_siteDefinition.pages[static_currentPage].blocks = newBlocks;
+	
 }
 
 function staticEditor_getBlockData(block){
 	var newBlockData = {};
 	newBlockData.classes = $(block).attr('data-static-classes');
+	newBlockData.blockType = $(block).attr('data-static-blockType');
 	newBlockData.width = staticEditor_getBlockWidth(block);
 	
 	if ($(block).attr('data-static-blockType') == 'content'){

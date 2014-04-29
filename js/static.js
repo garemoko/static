@@ -95,12 +95,33 @@ function static_getstatic_siteDefinition (static_siteDefinitionAddress, static_c
 }
 
 function static_renderStructure (){
-	var widthCounter = 0; 
+	var target = $('.static-main:first'),
+	containerObj =  static_siteDefinition.pages[static_currentPage];
+	
+	static_renderContainer (target, containerObj);
+	
+	//add one empty row at the bottom
+	$('<div class="row row-last"></div>').appendTo(target);
+	
+	static_stuctureLoaded = true;
+	console.log('%c Static:', 'color:#a64802',' Render structure took ' + ((new Date().getTime() - static_load_timestamp)/1000) + ' seconds.');
+	//load the page content
+	if (static_allLoaded()){
+		static_renderContent();
+	}
+
+	return true;
+}; 
+
+function static_renderContainer (target, containerObj){
+	var widthCounter = 0;
+	
 	//add the first row
-	$('.static-main:first').append('<div class="row"></div>');
+	target.append('<div class="row"></div>');
 	
 	//add each block to the page
-	$.each(static_siteDefinition.pages[static_currentPage].blocks, function(index,blockObj){
+	$.each(containerObj.blocks, function(index,blockObj){
+		
 		
 		//create block object
 		var blockHtml = $('<div class="static-block"></div>');
@@ -112,7 +133,6 @@ function static_renderStructure (){
 			blockHtml.addClass(blockObj.classes);
 		}
 		
-		
 		//add bootstrap width
 		if (!blockObj.hasOwnProperty('width')){
 			blockObj.width = 4;
@@ -122,12 +142,18 @@ function static_renderStructure (){
 		widthCounter += blockObj.width;
 		if (widthCounter > 12) {
 			//add a new row
-			$('.static-main:first').append('<div class="row"></div>');
+			target.append('<div class="row"></div>');
 			widthCounter = blockObj.width;
 		}
 		
+		//If the block contains blocks, then recursion!
+		//TODO: work out why this isn't working!!!
+		if (blockObj.hasOwnProperty('blocks')){
+			static_renderContainer (blockHtml, blockObj);
+		}
+		
 		//add the block to the bottom row		
-		$('.row:last').append(blockHtml);
+		target.children('.row:last').append(blockHtml);
 		
 		//add the site defintion data into the DOM for later.
 		var dataAttributes = [
@@ -151,19 +177,7 @@ function static_renderStructure (){
 		static_addBlockData(blockHtml,blockObj,dataAttributes);
 		
 	});
-	
-	//add one empty row at the bottom
-	$('<div class="row row-last"></div>').insertAfter($('.row:last'));
-	
-	static_stuctureLoaded = true;
-	console.log('%c Static:', 'color:#a64802',' Render structure took ' + ((new Date().getTime() - static_load_timestamp)/1000) + ' seconds.');
-	//load the page content
-	if (static_allLoaded()){
-		static_renderContent();
-	}
-
-	return true;
-}; 
+}
 
 function static_addBlockData (block, blockObj, attributes){
 	$.each(attributes, function(index, attribute){
@@ -231,24 +245,33 @@ function static_parserDependnaciesLoaded(){
 }
 
 function static_loadContent (){
+	
+	var block_counter = $('.static-block').length;
 	//for each static box
-	var block_counter = static_siteDefinition.pages[static_currentPage].blocks.length;
-	$.each(static_siteDefinition.pages[static_currentPage].blocks,function(index,block){
-		$.get(block.contentAddress, function (data){
-			static_content[index] = data;
-		}).fail(function(data) {
-		    static_content[index] = '';
-		}).always(function() {
-			block_counter--;
-			if (block_counter == 0){
-				console.log('%c Static:', 'color:#a64802',' Loading content took ' + ((new Date().getTime() - static_load_timestamp)/1000) + ' seconds.');
-				static_contentLoaded = true;
-				if (static_allLoaded()){
-					static_renderContent();
+	$('.static-block').each(function(index,block){
+		var contentAddress = $(block).attr('data-static-contentAddress');
+		if (contentAddress){
+			$.get($(block).attr('data-static-contentAddress'), function (data){
+				$(block).attr('data-static-content',data);
+			}).fail(function(data) {
+				$(block).attr('data-static-content','');
+			}).always(function() {
+				block_counter--;
+				if (block_counter == 0){
+					console.log('%c Static:', 'color:#a64802',' Loading content took ' + ((new Date().getTime() - static_load_timestamp)/1000) + ' seconds.');
+					static_contentLoaded = true;
+					if (static_allLoaded()){
+						static_renderContent();
+					}
 				}
-			}
-		});;
+			});
+		}
+		else {
+			block_counter--;
+			$(block).attr('data-static-content','');
+		}
 	});
+
 	return true;
 }
 
@@ -329,14 +352,12 @@ function static_buildNavLink (linkObj){
 function static_renderContent(){
 
 	//for each static box
-	$('.static-block').each(function(index){
-		boxid = $(this).attr('data-static-blockid');
+	$('.static-block').each(function(index,block){
 		//call the correct parser to add the content (if defined in the sitedef)
-		var currentParser = static_siteDefinition.pages[static_currentPage].blocks[boxid].parser;
-		if (typeof static_siteDefinition.pages[static_currentPage].blocks[boxid] !== 'undefined' && typeof currentParser !== 'undefined'){
-			static.parsers[currentParser].parse(static_content[index], $(this));
-		} else {
-			$(this).addClass('hidden');
+		var currentParser = $(block).attr('data-static-parser'),
+		currentContent = $(block).attr('data-static-content')
+		if (currentContent && currentParser){
+			static.parsers[currentParser].parse(currentContent, $(block));
 		}
 	});
 	
@@ -353,6 +374,11 @@ function static_renderContent(){
 }
 
 function static_changePage(page){
+	
+	//TODO: check if the editor exists first
+	//TODO: allow any editor to hook into this event. 
+	staticEditor_close();
+	
 	console.log('%c Static page change:', 'color:#48a602', page);
 	
 	static_currentPage = page; 
